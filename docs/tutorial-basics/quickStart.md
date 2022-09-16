@@ -6,13 +6,13 @@ sidebar_position: 1
 
 **This Quickstart tutorial walks you through the key concepts of mq-web3 snap using a sample react project and successfully send your first "hello world" to your friend!**
 
-
 ## Installation
+
 :::note
 
 Before installing, you need to install the [flask plugin](https://chrome.google.com/webstore/detail/metamask-flask-developmen/ljfoeinjpaedjfecbmggjgodbgkmjkjk?hl=zh-CN) on your browser.
 
-::: 
+:::
 
 Install mq-web3 snap by execute the following method in your app
 :::note
@@ -21,80 +21,84 @@ Before installation, flask will pop up a window for approval permissions, click 
 
 :::
 
-```javascript
-const connect = async function () {
-    await window.ethereum.request({
-      method: "wallet_enable",
-      params: [
-        {
-          wallet_snap: {
-            ["npm:mq-web3"]: {
-              version: "^1.0.16",
-            },
+```tsx
+const connect = async () => {
+  const res = await ethereum.request({
+    method: 'wallet_enable',
+    params: [
+      {
+        wallet_snap: {
+          'npm:web3-mq-snaps': {
+            version: '1.0.2',
           },
+        },
+      },
+    ],
+  });
+  console.log(res, 'connectSnaps');
+};
+
+<button onClick={connect}>connectSnaps</button>;
+```
+
+After the installation is complete you need a method to execute all the instructions uniformly, let's declare such a utility function
+
+```ts
+async function send(method, payload) {
+  try {
+    const res = await window.ethereum.request({
+      method: 'wallet_invokeSnap',
+      params: [
+        'npm:web3-mq-snaps',
+        {
+          method,
+          payload,
         },
       ],
     });
-  };
+    console.log(res, 'response');
+    return res;
+  } catch (err) {
+    alert(`Problem happened: ${err.message}` || err);
+  }
+}
 ```
-After the installation is complete you need a method to execute all the instructions uniformly, let's declare such a utility function
-```javascript
-const send = async function (method, payload) {
-    try {
-      const res = await window.ethereum.request({
-        method: "wallet_invokeSnap",
-        params: [
-          "npm:mq-web3",
-          {
-            method,//the name of the command
-            payload, //Parameters required to execute the command
-          },
-        ],
-      });
-      console.log("res", res);
-      if (!res) return;
-      return res;
-    } catch (err) {
-      console.error(err);
-      alert(`Problem happened: ${err.message}` || err);
-    }
-  };
-```
+
 ## Initialize Client and Connect to Web3MQ Network
+
 In order to connect to the Web3MQ Network, both users and developers authenticate through wallet signatures, we demonstrate below with an Ethereum wallet via Metamask, but Web3MQ is built to be compatible with wallets across different chains.
 
 ### Connect to Web3MQ Network
+
 :::note
 
 While we are committed to building an open and collectively owned public good, our early stage testnet requires an API key in order to connect. This is to control capacity to make sure that each early partner and developer is able to build a great experience on top of Web3MQ. [Apply here](https://web3mq.com/apply).
 
 :::
-We use the unified command execution method send  we declared above to connect to our Web3MQ network.Simply execution web3-mq-init command without connectUrl or an empty string returns a url of the best node determined for you, and this url can be stored locally.
+We use the unified command execution method send we declared above to connect to our Web3MQ network.Simply execution init command without connectUrl or an empty string returns a url of the best node determined for you, and this url can be stored locally.
 
-```javascript
-const initWeb3Mq = async function () {
-  // You can save the bestEndpointUrl locally to skip endpoint search next time, which will save time, and
-    const bestEndpointUrl = await send("web3-mq-init", {
-      app_key: "",// temporary authorization key obtained by applying, will be removed in future testnets and mainnet
-      connectUrl:'',
-      env: "test",
-    });
-    console.log('bestEndpointUrl',bestEndpointUrl)
-    initWeb3Mq()
+```tsx
+const initWeb3MQ = async function () {
+  // You can save the bestEndpointUrl locally to skip endpoint search next time, which will save time
+  const bestEndpointUrl = await send('init', {
+    connectUrl: '',
+    app_key: 'app_key', // temporary authorization key obtained by applying, will be removed in future testnets and mainnet
+  });
+  console.log('bestEndpointUrl', bestEndpointUrl);
+};
 ```
-execution web3-mq-init command  with a specific connectUrl forces the client to connect to that specific node. When bestEndpointUrl is stored, it might be time-saving to connect directly instead of running the search again.
 
-```javascript
-const initWeb3Mq = async function () {
-    const bestEndpointUrl = await send("web3-mq-init", {
-      app_key: "",// Appkey applied from our team
-      connectUrl:bestEndpointUrl,// takes in a valid endpoint url as input, when this paramter is given, client will always connect to that specific node.
-      env: "test",
-    });
-     localStorage.setItem("FAST_URL", bestEndpointUrl);
-    console.log('bestEndpointUrl',bestEndpointUrl)
-    initWeb3Mq()
+execution init command with a specific connectUrl forces the client to connect to that specific node. When bestEndpointUrl is stored, it might be time-saving to connect directly instead of running the search again.
+
+```ts
+const initWeb3MQ = async function () {
+  const bestEndpointUrl = await send('init', {
+    connectUrl: bestEndpointUrl, // takes in a valid endpoint url as input, when this paramter is given, client will always connect to that specific node.
+    app_key: 'app_key', // Appkey applied from our team
+  });
+};
 ```
+
 #### API endpoints
 
 During this initial testing phase, we've hosted complete networks of Web3MQ nodes in different regions around the globe. Connect to these endpoints below, to access the Web3MQ Testnet.
@@ -106,29 +110,32 @@ During this initial testing phase, we've hosted complete networks of Web3MQ node
 - https://testnet-ap-singapore-1.web3mq.com
 - https://testnet-ap-singapore-2.web3mq.com
 
-
 ### Sign with wallet to register user and obtain message encryption keys
 
-For any first-time user of Web3MQ's network, you'll need to register on Web3MQ's network. mq-web3 snap takes care of the key generation process and subsequent wallet signing process. execution web3-mq-register command to get keys
+For any first-time user of Web3MQ's network, you'll need to register on Web3MQ's network. mq-web3 snap takes care of the key generation process and subsequent wallet signing process. execution register command to get keys
 
 #### Code
 
 :::note
 
- You must ensure that execution web3-mq-init command and make sure it is complete before running this
+You must ensure that execution init command and make sure it is complete before running this
 :::
 
 ```ts
-const register =async function(){
-  let result = await send("web3-mq-register", {
-      signContentURI: "https://www.web3mq.com",
-    });
-    console.log("result", result);
-    const { PrivateKey, PublicKey } = result;
-    localStorage.setItem("PRIVATE_KEY", PrivateKey);
-    localStorage.setItem("PUBLICKEY", PublicKey);
-}
+const register = async function () {
+  // You must ensure that the initWeb3MQ initialization is complete before running this
+  const keys = await send('register', {
+    signContentURI: 'https://www.web3mq.com', // your signContent URI
+    EthAddress: 'your eth address', // *Not required*  your eth address, if not use your MetaMask eth address
+  });
+  const { PrivateKey, PublicKey } = keys;
+
+  // Keep your private key in a safe place, this is for demo purposes only
+  localStorage.setItem('PRIVATE_KEY', PrivateKey);
+  localStorage.setItem('PUBLICKEY', PublicKey);
+};
 ```
+
 ### Get Client Instance
 
 #### Code
@@ -136,11 +143,15 @@ const register =async function(){
 ```ts
 const keys = { PrivateKey, PublicKey };
 
-const generateInstance = async function () {
-    return await send("getInstance", { keys });
-  };
-  generateInstance()
+const getClientInstance = async function () {
+  await send('getInstance', keys);
+};
 ```
+
+```tsx
+<button onClick={getClientInstance}>get Client Instance</button>
+```
+
 ## Create room
 
 After initializing the client and registering your user, the next step is to connect to a room
@@ -149,268 +160,60 @@ After initializing the client and registering your user, the next step is to con
 
 ```ts
 const createRoom = async function () {
-    await send("creatRoom", {});
-  };
-  createRoom()
+  await send('creatRoom');
+};
 ```
 
 ```tsx
-<button
-  onClick={createRoom}>
-  createGroup
-</button>
+<button onClick={createRoom}>createRoom</button>
 ```
-## Send message
+
+## Get Channel List
 
 #### Code
 
 ```ts
-const sendMessage = async function (payload) {
-    return await send("handleSendMessage", { ...payload });
-  };
-  sendMessage({
-    text:'Hello World'
-  })
+const GetChannelList = async function () {
+  const channelListArr = await send('queryChannelList', {
+    options: { page: 1, size: 100 },
+  });
+
+  console.log(channelListArr);
+};
 ```
 
 ```tsx
-<button
-  onClick={() => {
-  sendMessage({
-    text:'Hello World'
-  });
-}}>
-  sendMessage
-</button>
+<button onClick={GetChannelList}>GetChannelList</button>
 ```
+
+## Send Message
+
+#### Code
+
+```ts
+const sendMessage = async function () {
+ await send('sendMessage', { msg: 'testMsg', topic: 'Select the topic you got from GetChannelList API' }),
+};
+```
+
+```tsx
+<button onClick={sendMessage}>sendMessage</button>
+```
+
+## Get Message List
+
+#### Code
+
+```ts
+const getMessageList = async function () {
+ await send('getMessageList', { options: { page: 1, size: 100 }, topic: 'Select the topic you got from GetChannelList API' }),
+};
+```
+
+```tsx
+<button onClick={getMessageList}>getMessageList</button>
+```
+
 ## Full Example
 
-```jsx
-import React, { useEffect, useMemo, useState } from "react";
-
-function App() {
-  const connect = async function () {
-    await window.ethereum.request({
-      method: "wallet_enable",
-      params: [
-        {
-          wallet_snap: {
-            ["npm:mq-web3"]: {
-              version: "^1.0.16",
-            },
-          },
-        },
-      ],
-    });
-  };
-  const send = async function (method, payloadcus) {
-    console.log("method", method);
-    let payload = {
-      ...payloadcus,
-    };
-    try {
-      const res = await window.ethereum.request({
-        method: "wallet_invokeSnap",
-        params: [
-          "npm:mq-web3",
-          {
-            method, //the name of the command
-            payload, //Parameters required to execute the command
-          },
-        ],
-      });
-      console.log("res", res);
-      if (!res) return;
-      return res;
-    } catch (err) {
-      console.error(err);
-      alert(`Problem happened: ${err.message}` || err);
-    }
-  };
-
-  const init = async () => {
-    await connect();
-  };
-  const hasKeys = useMemo(() => {
-    const PrivateKey = localStorage.getItem("PRIVATE_KEY") || "";
-    const PublicKey = localStorage.getItem("PUBLICKEY") || "";
-    if (PrivateKey && PublicKey) {
-      return { PrivateKey, PublicKey };
-    }
-    return null;
-  }, []);
-  const [fastestUrl, setFastUrl] = useState(null);
-  const [keys, setKeys] = useState(hasKeys);
-  const signMetaMask = async function () {
-    await init();
-    const fastUrl = await send("web3-mq-init", {
-      app_key: "vAUJTFXbBZRkEDRE",
-      connectUrl: "",
-      env: "test",
-    });
-    console.log("fast", fastUrl);
-    let result = await send("web3-mq-register", {
-      signContentURI: "https://www.web3mq.com",
-    });
-    console.log("result", result);
-    const { PrivateKey, PublicKey } = result;
-    localStorage.setItem("FAST_URL", fastUrl);
-    localStorage.setItem("PRIVATE_KEY", PrivateKey);
-    localStorage.setItem("PUBLICKEY", PublicKey);
-    setKeys({ PrivateKey, PublicKey });
-    setFastUrl(fastUrl);
-    console.log("keys", PrivateKey, PublicKey);
-  };
-  if (!keys || !fastestUrl) {
-    return (
-      <React.Fragment>
-        {/* <button onClick={init}>connect</button> */}
-        <div>
-          <button onClick={signMetaMask}>signMetaMask</button>
-        </div>
-      </React.Fragment>
-    );
-  }
-
-  return (
-    <div>
-      <Child send={send} keys={keys}></Child>
-    </div>
-  );
-}
-const Child = ({ ...props }) => {
-  const { send, keys } = props;
-  const [list, setList] = useState(null);
-  const [activeChannel, setCurrentActiveChannel] = useState(null);
-  const [text, setText] = useState("");
-  const [messageList, setMessageList] = useState([]);
-  const generateInstance = async function () {
-    return await send("getInstance", { keys });
-  };
-  const addInstanceListeners = async function () {
-    return await send("addInstanceListeners", {});
-  };
-  const queryChannelList = async function () {
-    return await send("queryChannelList", {});
-  };
-  const getChannelList = async function () {
-    return await send("getChannelList", {});
-  };
-  const setActiveChannel = async function (payload) {
-    return await send("setActiveChannel", { ...payload });
-  };
-  const getActiveChannel = async function () {
-    return await send("getActiveChannel", {});
-  };
-  const getClientMessageList = async function () {
-    return await send("getClientMessageList", {});
-  };
-  const sendMessage = async function (payload) {
-    return await send("handleSendMessage", { ...payload });
-  };
-  const creatClient = async function () {
-    await generateInstance();
-    await addInstanceListeners();
-    await queryChannelList();
-    let list = await getChannelList();
-    setList(list);
-  };
-  useEffect(() => {
-    creatClient();
-  }, [keys]);
-  const intervalFuction = async function () {
-    let activeChannel = await getActiveChannel();
-    if (activeChannel) {
-      let msgList = await getClientMessageList();
-      setMessageList(msgList);
-    }
-  };
-  useEffect(() => {
-    let timer = setInterval(() => {
-      intervalFuction();
-    }, 2000);
-    return () => {
-      clearInterval(timer);
-    };
-  }, []);
-  const handleChangeActive = async function (channel) {
-    await setActiveChannel({ channel });
-    let activeChannel = await getActiveChannel();
-    if (activeChannel) {
-      let msgList = await getClientMessageList();
-      setMessageList(msgList);
-      setCurrentActiveChannel(activeChannel);
-    }
-  };
-  const handleSendMessage = async function () {
-    setText("");
-    await sendMessage(text);
-  };
-  const createRoom = async function () {
-    await send("creatRoom", {});
-    // await queryChannelList();
-    let list = await getChannelList();
-    setList(list);
-  };
-  const List = () => {
-    if (!list) {
-      return null;
-    }
-    return (
-      <ul>
-        {list.map((item, idx) => {
-          return (
-            <li
-              style={{ cursor: "pointer" }}
-              key={item.topic}
-              onClick={() => handleChangeActive(item)}
-            >
-              {idx}-{item.topic}
-            </li>
-          );
-        })}
-      </ul>
-    );
-  };
-  return (
-    <div>
-      <button
-        onClick={() => {
-          createRoom();
-        }}
-      >
-        create Room
-      </button>
-      <h1>room list</h1>
-      <List />
-      <h1>message list</h1>
-      {activeChannel && (
-        <div>
-          <div>
-            <b>activeChannel:</b>
-            <span style={{ color: "blue" }}>{activeChannel.topic}</span>
-          </div>
-          <div style={{ minHeight: 300, border: "1px solid #000" }}>
-            {messageList.map((item) => {
-              return <div key={item.id}>message: {item.content}</div>;
-            })}
-          </div>
-          <div>
-            <input
-              value={text}
-              type="text"
-              onChange={(e) => {
-                setText(e.target.value);
-              }}
-            />
-            <button onClick={handleSendMessage}>send Message</button>
-          </div>
-        </div>
-      )}
-    </div>
-  );
-};
-
-export default App;
-
-```
+- https://github.com/Generative-Labs/web3-mq-snaps-demo
